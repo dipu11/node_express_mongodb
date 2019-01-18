@@ -5,9 +5,7 @@ const url='mongodb://localhost:27017/conFusion';
 const dbname = 'conFusion';
 
 
-MongoClient.connect(url, (err, client)=>{
-
-	assert.equal(err, null);
+MongoClient.connect(url).then((client)=>{
 
 	
   	const db = client.db(dbname);
@@ -16,30 +14,32 @@ MongoClient.connect(url, (err, client)=>{
   	*call back hell as well--
   	*/
  	
- 	dbop.insertDocument(db, {"name":"alien", "description":"new alien"},"dishes", (result)=>{
- 		 console.log("insert document:", result.ops);
+ 	dbop.insertDocument(db, {"name":"alien", "description":"new alien"},"dishes").then((result)=>{ 		
  		 console.log("lets find the inserted one");
 
- 		 dbop.findDocuments(db, "dishes", (docs)=>{
- 		 	console.log("Found document:", docs);
+ 		 return dbop.findDocuments(db, "dishes");
+ 		}).then((docs)=>{
+ 			console.log("Found updated document:", docs);
 
- 		 	dbop.updateDocument(db, {"name":"alien"}, {"description":"alient updated by newer version OS"}, "dishes", (result)=>{
- 		 		console.log("updated doc: new alien:", result.result); 
+ 		 	return dbop.updateDocument(db, {"name":"alien"}, {"description":"alient updated by newer version OS"}, "dishes"); 		 		
+ 		 		}).then((result)=>{ 
+ 		 			console.log("found updated doc: new alien:", result.result); 
+ 		 			return dbop.findDocuments(db, "dishes")
+ 		 			
+ 		 			}).then((doc)=>{
+ 		 				 console.log("found to drop Document again:\n",doc);
+ 		 				return db.dropCollection("dishes");
+ 		 			}).then((result)=>{
 
- 		 		 dbop.findDocuments(db, "dishes", (docs)=>{
- 		 			console.log("Found updated document:", docs);
-
- 		 			db.dropCollection("dishes", (result)=>{
  		 				console.log("collection dropped!:", result);
 
  		 				//db.close();
  		 				client.close();
+ 		 			}).catch((err)=>
+ 		 			{
+ 		 				console.log("err:"+err);
  		 			});
-
- 		 		});
- 		 	})
- 		 });
- 	});
-
-
+}).catch((err)=>
+{
+	console.log("con-err:"+err);
 });
